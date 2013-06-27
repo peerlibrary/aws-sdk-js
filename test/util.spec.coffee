@@ -67,6 +67,9 @@ describe 'AWS.util.queryParamsToString', ->
   it 'handles values as lists', ->
     expect(qpts(a: ['1', '2', '3'], b: '4')).toEqual('a=1&a=2&a=3&b=4')
 
+  it 'escapes list values', ->
+    expect(qpts(a: ['+', '&', '*'], b: '4')).toEqual('a=%26&a=%2A&a=%2B&b=4')
+
 describe 'AWS.util.date', ->
 
   util = AWS.util.date
@@ -126,6 +129,7 @@ describe 'AWS.util.string', ->
       file = fs.createReadStream(__filename)
       fileLen = fs.lstatSync(file.path).size
       expect(len(file)).toEqual(fileLen)
+      expect(len(path: __filename)).toEqual(fileLen)
 
     it 'fails if input is not a string, buffer, or file', ->
       err = null
@@ -136,6 +140,17 @@ describe 'AWS.util.string', ->
 
       expect(err.message).toEqual('Cannot determine length of 3.14')
       expect(err.object).toBe(3.14)
+
+    it 'ignores path property unless it is a string', ->
+      object = {}
+      err = null
+      try
+        len(object)
+      catch e
+        err = e
+
+      expect(err.message).toMatch(/Cannot determine length of /)
+      expect(err.object).toBe(object)
 
 describe 'AWS.util.buffer', ->
   describe 'concat', ->
@@ -410,6 +425,6 @@ describe 'AWS.util.base64', ->
       expect(base64.encode('ёŝ')).toEqual('0ZHFnQ==')
 
   describe 'decode', ->
-    it 'encodes the given string', ->
+    it 'decodes the given string', ->
       expect(base64.decode('Zm9v')).toEqual('foo')
       expect(base64.decode('0ZHFnQ==')).toEqual('ёŝ')
